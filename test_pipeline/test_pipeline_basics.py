@@ -1,52 +1,44 @@
-import time
-import json
-from stepist.flow import session
-from uuid import uuid4
-from stairs.tests.utils import run_stepist_workers
-
 from stairs.tests.flows.name_extraction import (NameExtractionOneWayFlow,
-                                                NameExtractionFlowMultiple)
+                                                NameExtractionFlowMultiple,
+                                                NameExtractionWorkersOneWayFlow)
+
+from stairs.core.worker import Worker
+from stairs.core.worker.data_pipeline import concatenate
 
 
-def test_pipeline_one_flow(worker):
+def test_multiple_vars(app):
+    def p_builder(worker, sentence, use_lower):
+        data = concatenate(sentence=sentence,
+                           use_lower=use_lower)
 
-    worker.pipeline.add_flow(NameExtractionOneWayFlow(), name=uuid4())
-    worker.compile()
+        data_with_name = data\
+            .subscribe_flow(NameExtractionOneWayFlow(),
+                            as_worker=False)
 
-    sentence = "Hello from Oleg."
+        return data_with_name
 
-    result = worker(sentence=sentence)
+    _worker = Worker(
+        app=app,
+        pipeline_builder=p_builder,
+        worker_config={}
+    )
 
-    assert len(result['names']) == 1
+    def p_builder_general(worker, sentence, use_lower):
+        data = concatenate(sentence=sentence,
+                           use_lower=use_lower)
+
+        return data.subscribe_pipeline(_worker)\
+                   .subscribe_flow(NameExtractionFlowMultiple(),
+                                   as_worker=False)
+
+    worker = Worker(
+        app=app,
+        pipeline_builder=p_builder_general,
+        worker_config={}
+    )
+
+    result = worker(sentence="Oleg",
+                    use_lower=True)
+
     assert result['names'][0] == "Oleg"
 
-
-def test_pipeline_multiple_one_app_flows(worker):
-    worker.pipeline.add_flow(NameExtractionOneWayFlow(), name=uuid4())
-    worker.pipeline.add_flow(NameExtractionFlowMultiple(use_lower=True),
-                             name=uuid4())
-    worker.compile()
-
-    sentence = " Hello from Oleg. "
-    result = worker(sentence=sentence)
-
-    assert len(result['names']) == 1
-    assert result['names'][0] == "oleg"
-    assert result['clean'] == sentence.strip()
-
-
-def test_pipeline_and_additional_worker(worker, worker_flow_multiple, redis):
-    worker.pipeline.add_flow(NameExtractionOneWayFlow(), name=uuid4())
-    worker.pipeline.add_worker(worker_flow_multiple, name=uuid4())
-    worker.compile()
-
-    sentence = " Hello from Oleg. "
-    worker(sentence=sentence)
-
-    run_stepist_workers()
-    results = redis.get("test")
-    assert results
-    result = json.loads(results)
-
-    assert len(result['names']) == 1
-    assert result['names'][0] == "oleg"
