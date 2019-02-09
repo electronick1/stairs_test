@@ -12,18 +12,18 @@ def test_make_add_value_with_flow(app):
         return data
 
     @app.pipeline(config=dict(path='123'))
-    def p_builder2(worker, sentence):
-        return sentence\
-            .make(data=sentence)\
+    def p_builder3(worker, sentence2):
+        return sentence2\
+            .rename(sentence=sentence2)\
             .add_value(path=worker.config['path'])\
             .subscribe_flow(NameExtractionOneWayFlow(use_lower=True))\
             .subscribe_func(save_result)
 
     @app.pipeline()
-    def p_builder_general2(worker, sentence):
-        return sentence.subscribe_pipeline(p_builder2, config=dict(path='321'))
+    def p_builder_general3(worker, sentence2):
+        return sentence2.subscribe_pipeline(p_builder3, config=dict(path='321'))
 
-    p_builder_general2(sentence="Oleg")
+    p_builder_general3(sentence2="Oleg")
     run_pipelines(app)
 
     assert list(result.keys()) == ['sentence', 'path', 'names']

@@ -6,26 +6,38 @@ from stairs.core.worker.data_pipeline import concatenate
 
 def test_make_with_flow(app):
     @app.pipeline()
-    def p_builder(worker, sentence):
-        return sentence\
-            .make(data=sentence)\
+    def p_builder(worker, sentence2):
+        return sentence2\
+            .rename(sentence=sentence2)\
             .apply_flow(NameExtractionOneWayFlow(use_lower=True))
 
-    result = p_builder(sentence="Oleg")
+    result = p_builder(sentence2="Oleg")
 
     assert list(result.keys()) == ['names']
     assert result['names'][0] == "oleg"
 
 
-def test_make_add_value_with_flow(app):
+def test_make_and_func(app):
     @app.pipeline()
     def p_builder(worker, sentence):
         return sentence\
-            .make(data=sentence)\
+            .rename(data=sentence)\
+            .subscribe_func(lambda data: dict(result="ok"), name="result_ok")
+
+    result = p_builder(sentence="Oleg")
+
+    assert result['result'] == "ok"
+
+
+def test_make_add_value_with_flow(app):
+    @app.pipeline()
+    def p_builder(worker, sentence2):
+        return sentence2\
+            .rename(sentence=sentence2)\
             .add_value(path='123')\
             .subscribe_flow(NameExtractionOneWayFlow(use_lower=True))
 
-    result = p_builder(sentence="Oleg")
+    result = p_builder(sentence2="Oleg")
 
     assert list(result.keys()) == ['names', 'sentence', 'path']
     assert result['names'][0] == "oleg"
