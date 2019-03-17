@@ -12,7 +12,7 @@ def test_connected_pipelines(app):
         data = concatenate(sentence=sentence,
                            use_lower=use_lower)
 
-        data_with_name = data\
+        data_with_name = data \
             .subscribe_flow(NameExtractionOneWayFlow(),
                             as_worker=False)
 
@@ -27,6 +27,8 @@ def test_connected_pipelines(app):
                    .subscribe_flow(NameExtractionFlowMultiple(),
                                    as_worker=False)
 
+    p_builder.compile()
+    p_builder_general.compile()
     p_builder_general(sentence="Oleg", use_lower=True)
     run_pipelines(app)
 
@@ -44,8 +46,7 @@ def test_connected_pipelines_multiple(app):
                            use_lower=use_lower)
 
         data_with_name = data\
-            .subscribe_flow(NameExtractionOneWayFlow(),
-                            as_worker=False)
+            .subscribe_flow(NameExtractionOneWayFlow())
 
         return data_with_name
 
@@ -55,14 +56,14 @@ def test_connected_pipelines_multiple(app):
                            use_lower=use_lower)
 
         v1 = data.subscribe_pipeline(p_builder)\
-                 .subscribe_flow(NameExtractionFlowMultiple(use_lower=use_lower),
-                                 as_worker=False)
+                 .subscribe_flow(NameExtractionFlowMultiple(use_lower=use_lower))
         v2 = data.subscribe_pipeline(p_builder)\
-                 .subscribe_flow(NameExtractionFlowMultiple(use_lower=use_lower),
-                                 as_worker=False)
+                 .subscribe_flow(NameExtractionFlowMultiple(use_lower=use_lower))
 
         return concatenate(v1=v1, v2=v2).subscribe_func(save_result)
 
+    p_builder.compile()
+    p_builder_general.compile()
     p_builder_general(sentence="Oleg", use_lower=True)
     run_pipelines(app)
 
