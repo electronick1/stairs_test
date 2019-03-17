@@ -33,19 +33,3 @@ def test_worker_producer(app):
     run_pipelines(app)
 
     assert len(producer_output) == 20  # 10 batches with 2 jobs
-
-#
-# def test_none_default_pipelines(app):
-#     producer_output = []
-#
-#     def callback_func(x):
-#         producer_output.append(x)
-#
-#     @app.producer(none_default=function_as_step(callback_func))
-#     def simple_producer():
-#         for i in range(100):
-#             yield dict(x=1)
-#
-#     simple_producer.process(custom_pipelines_keys=['none_default'])
-#
-#     assert len(producer_output) == 100

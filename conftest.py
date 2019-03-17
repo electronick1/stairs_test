@@ -16,23 +16,28 @@ def stepist_app():
 
 
 @pytest.fixture()
-def redis_project(stepist_app):
+def project(stepist_app):
     return StairsProject(stepist_app)
 
 
-@pytest.fixture()
-def rmq_project(stepist_app):
+def redis_project():
+    return StairsProject()
+
+
+def rmq_project():
     worker_engine = RQAdapter()
-    return StairsProject(stepist_app, worker_engine=worker_engine)
+    return StairsProject(worker_engine=worker_engine)
 
 
-@pytest.fixture()
-def sqs_project(stepist_app):
-    return StairsProject(stepist_app)
+def sqs_project():
+    worker_engine = SQSAdapter()
+    return StairsProject(worker_engine=worker_engine)
 
 
-@pytest.fixture(params=[redis_project, rmq_project, sqs_project])
-def app(project):
+@pytest.fixture(params=[redis_project, rmq_project, sqs_project],
+                ids=['redis', 'rmq', 'sqs'])
+def app(request):
+    project = request.param()
     app = stairs_app.App(project)
     project.add_app(app)
     return app
