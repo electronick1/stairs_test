@@ -1,4 +1,5 @@
 from utils import function_as_step, run_pipelines
+from stairs.core.producer.producer import run_jobs_processor
 
 
 def test_worker_producer(app):
@@ -25,7 +26,9 @@ def test_worker_producer(app):
     worker_producer()
     try:
         worker_producer()
-        batch_handler.run_jobs_processor(die_when_empty=True)
+        run_jobs_processor(app.project,
+                           [batch_handler],
+                           die_when_empty=True)
     except SystemExit:
         pass
 
