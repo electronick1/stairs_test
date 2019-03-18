@@ -3,7 +3,7 @@ from stairs.tests.flows.name_extraction import (NameExtractionOneWayFlow,
 
 from stairs.core.worker.data_pipeline import concatenate
 
-from utils import run_pipelines
+from utils import run_pipelines, TestData
 
 
 def test_connected_pipelines(app):
@@ -34,11 +34,7 @@ def test_connected_pipelines(app):
 
 
 def test_connected_pipelines_multiple(app):
-    result = dict()
-
-    def save_result(**data):
-        result.update(data)
-        return data
+    t = TestData()
 
     @app.pipeline()
     def p_builder(worker, sentence, use_lower):
@@ -60,12 +56,13 @@ def test_connected_pipelines_multiple(app):
         v2 = data.subscribe_pipeline(p_builder)\
                  .subscribe_flow(NameExtractionFlowMultiple(use_lower=use_lower))
 
-        return concatenate(v1=v1, v2=v2).subscribe_func(save_result)
+        return concatenate(v1=v1, v2=v2).subscribe_func(t.save_one_item)
 
     p_builder.compile()
     p_builder_general.compile()
     p_builder_general(sentence="Oleg", use_lower=True)
     run_pipelines(app)
-
+    result = t.get_result()
+    print(result)
     assert result['v1']['names'][0] == "oleg"
     assert result['v2']['names'][0] == "oleg"

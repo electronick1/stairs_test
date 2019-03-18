@@ -38,12 +38,15 @@ def sqs_project():
                 ids=['redis', 'rmq', 'sqs'])
 def app(request):
     project = request.param()
-    app = stairs_app.App(project)
+    app = stairs_app.App("test")
     project.add_app(app)
     return app
 
 
 @pytest.fixture()
 def simple_pipeline(app):
-    pipeline = lambda worker: DataFrame(DataPipeline.make_empty(app, worker))
-    return app.pipeline()(pipeline)
+    @app.pipeline()
+    def simple_pipeline(worker):
+        return  DataFrame(DataPipeline.make_empty(app, worker))
+
+    return simple_pipeline
