@@ -1,10 +1,10 @@
-from utils import function_as_step, run_pipelines
-
-from pyspark import SparkContext
-from pyspark.sql import SparkSession
+# from utils import function_as_step, run_pipelines
+#
+# from pyspark import SparkContext
+# from pyspark.sql import SparkSession
 
 # Set up the Spark context and the streaming context
-sc = SparkContext(appName="PysparkNotebook")
+# sc = SparkContext(appName="PysparkNotebook")
 
 #
 # def test_spark_producer(app):

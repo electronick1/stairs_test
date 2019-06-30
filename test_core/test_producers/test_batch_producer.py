@@ -1,9 +1,9 @@
-from utils import function_as_step, run_pipelines, TestData
-from stairs.core.producer.producer import run_jobs_processor
+from utils import function_as_step, run_pipelines, GlobalTestData
+from stairs.core.producer import run_jobs_processor
 
 
 def test_worker_producer(app):
-    t = TestData()
+    t = GlobalTestData()
 
     @app.pipeline()
     def simple_pipeline(pipeline, x):

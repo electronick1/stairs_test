@@ -2,7 +2,7 @@ import utils
 from stairs.tests.flows.name_extraction import (NameExtractionOneWayFlow,
                                                 NameExtractionFlowMultiple)
 
-from stairs.core.worker.data_pipeline import concatenate
+from stairs.core.pipeline.data_pipeline import concatenate
 
 
 def test_make_with_flow(app):
@@ -140,3 +140,61 @@ def test_functions(app):
     result = p_builder(sentence="Oleg")
 
     assert global_data['result'] == "applied"
+
+
+def test_deep_tree_functions(app):
+    global_data = dict()
+
+    @app.consumer()
+    def save_globaly(name, result , **kwargs):
+        print(name, result)
+        global_data[name] = result
+
+    @app.pipeline()
+    def p_builder(worker, sentence):
+        root_branch = sentence \
+            .subscribe_func(lambda sentence: dict(func1="ok"), name='root1') \
+            .subscribe_func(lambda sentence: dict(func2="ok"), name='root2')
+
+        branch_1 = root_branch \
+            .add_value(name='branch_1') \
+            .subscribe_func(lambda func1, func2: dict(func1_1="ok"),
+                            name='branch_1_1') \
+            .subscribe_func(lambda func1, func2: dict(result="branch_1"),
+                            name='branch_1_2')\
+            .subscribe_consumer(save_globaly)
+
+        branch_2 = root_branch \
+            .add_value(name='branch_2') \
+            .subscribe_func(lambda func1, func2: dict(func1_1="ok"),
+                            name='branch_2_1') \
+            .subscribe_func(lambda func1, func2: dict(result="branch_2"),
+                            name='branch_2_2')\
+            .subscribe_consumer(save_globaly)
+
+        branch_3 = root_branch \
+            .add_value(name='branch_3') \
+            .subscribe_func(lambda func1, func2: dict(func1_1="ok"),
+                            name='branch_3_1') \
+            .subscribe_func(lambda func1, func2: dict(result="branch_3"),
+                            name='branch_3_2')\
+            .subscribe_consumer(save_globaly)
+
+        return concatenate(
+            branch_1=branch_1,
+            branch_2=branch_2,
+            branch_3=branch_3
+        )
+
+    p_builder.compile()
+    result = p_builder(sentence="Oleg")
+
+    print(global_data)
+
+    assert 'branch_1' in global_data
+    assert 'branch_2' in global_data
+    assert 'branch_3' in global_data
+
+    assert global_data['branch_1'] == 'branch_1'
+    assert global_data['branch_2'] == 'branch_2'
+    assert global_data['branch_3'] == 'branch_3'

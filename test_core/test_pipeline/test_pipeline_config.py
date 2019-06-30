@@ -1,11 +1,11 @@
 from stairs.tests.flows.name_extraction import (NameExtractionOneWayFlow,
                                                 NameExtractionFlowMultiple)
 
-from utils import run_pipelines, check_keys, TestData
-
+from utils import run_pipelines, check_keys, GlobalTestData
+from stairs import DataFrame
 
 def test_make_add_value_with_flow(app):
-    t = TestData()
+    t = GlobalTestData()
 
     @app.pipeline(config=dict(path='123'))
     def p_builder3(worker, sentence2):
@@ -16,7 +16,7 @@ def test_make_add_value_with_flow(app):
             .subscribe_func(t.save_one_item)
 
     @app.pipeline()
-    def p_builder_general3(worker, sentence2):
+    def p_builder_general3(worker, sentence2: DataFrame):
         return sentence2.subscribe_pipeline(p_builder3, config=dict(path='321'))
 
     p_builder3.compile()
