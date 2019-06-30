@@ -5,17 +5,14 @@ class SimpleFlow(Flow):
 
     def __call__(self, a):
         r = self.start_from(self.initial_step, a=a)
-
         return {**r.second_step}
 
     @step(None)
     def second_step(self, a):
-        print("second")
         return dict(mul_two=a * 2)
 
     @step(second_step)
     def initial_step(self, a):
-        print("initial")
         return dict(a=a)
 
 
@@ -23,7 +20,6 @@ class FlowMultipleBranches(Flow):
 
     def __call__(self, a):
         r = self.start_from(self.initial_step, a=a)
-
         return {**r.step_left, **r.step_right}
 
     @step(None)
@@ -43,7 +39,6 @@ class FlowWithSaveResult(Flow):
 
     def __call__(self, a):
         r = self.start_from(self.initial_step, a=a)
-
         return {**r.third_step, **r.second_step}
 
     @step(None)
@@ -63,7 +58,6 @@ class FlowReconnect(SimpleFlow):
 
     def __call__(self, a):
         r = self.start_from(self.initial_step, a=a)
-
         return {**r.third_step, **r.second_step}
 
     def __reconnect__(self):
@@ -73,3 +67,18 @@ class FlowReconnect(SimpleFlow):
     @step(None)
     def third_step(self, a):
         return dict(mul_three=a * 3)
+
+    @step(third_step)
+    def second_step(self, a):
+        return dict(mul_two_patched=a*2)
+
+
+class HardInheritance(SimpleFlow, FlowWithSaveResult):
+
+    def __call__(self, a):
+        r = self.start_from(self.initial_step, a=a)
+        return {**r.third_step, **r.second_step}
+
+    @step(FlowWithSaveResult.third_step, save_result=True)
+    def second_step(self, a):
+        return dict(mul_two_patched=a * 2)

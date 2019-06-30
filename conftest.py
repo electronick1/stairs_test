@@ -5,7 +5,7 @@ from stepist.app import App as StepistApp
 from stepist.flow.workers.adapters.rm_queue import RQAdapter
 from stepist.flow.workers.adapters.sqs_queue import SQSAdapter
 
-from stairs.core.worker.data_pipeline import DataPipeline, DataFrame
+from stairs.core.pipeline.data_pipeline import DataPipeline, DataFrame
 from stairs.core.project import StairsProject
 from stairs.core import app as stairs_app
 
@@ -30,7 +30,7 @@ def rmq_project():
 
 
 def sqs_project():
-    worker_engine = SQSAdapter()
+    worker_engine = SQSAdapter(wait_seconds=5)
     return StairsProject(worker_engine=worker_engine)
 
 
@@ -38,12 +38,16 @@ def sqs_project():
                 ids=['redis', 'rmq', 'sqs'])
 def app(request):
     project = request.param()
-    app = stairs_app.App(project)
+    project.dbs.redis_db.flushall()
+    app = stairs_app.App("test")
     project.add_app(app)
     return app
 
 
 @pytest.fixture()
 def simple_pipeline(app):
-    pipeline = lambda worker: DataFrame(DataPipeline.make_empty(app, worker))
-    return app.pipeline()(pipeline)
+    @app.pipeline()
+    def simple_pipeline(worker):
+        return DataFrame(DataPipeline.make_empty(app, worker))
+
+    return simple_pipeline
