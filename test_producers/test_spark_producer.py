@@ -1,12 +1,20 @@
+import pytest
 from utils import function_as_step, run_pipelines
 
-from pyspark import SparkContext
-from pyspark.sql import SparkSession
+try:
+    from pyspark import SparkContext
+    from pyspark.sql import SparkSession
 
-# Set up the Spark context and the streaming context
-sc = SparkContext(appName="PysparkNotebook")
+    # Set up the Spark context and the streaming context
+    sc = SparkContext(appName="PysparkNotebook")
+
+    skip_test = lambda x:  x
+
+except ImportError:
+    skip_test = pytest.mark.skip(reason="no way of currently testing this")
 
 
+@skip_test
 def test_spark_producer(app):
     producer_output = []
 
