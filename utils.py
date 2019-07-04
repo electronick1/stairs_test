@@ -2,14 +2,22 @@ import pytest
 import json
 import redis
 import uuid
+import multiprocessing
 from stepist import Step
 from contextlib import contextmanager
+
 
 def run_pipelines(app):
     try:
         app.project.run_pipelines(die_when_empty=True)
     except SystemExit:
         pass
+
+
+def run_pipelines_process(app) -> multiprocessing.Process:
+    t = multiprocessing.Process(target=app.project.run_pipelines)
+    t.start()
+    return t
 
 
 def check_keys(keys1, keys2):

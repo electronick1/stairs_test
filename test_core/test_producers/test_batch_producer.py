@@ -32,3 +32,41 @@ def test_worker_producer(app):
     run_pipelines(app)
 
     assert len(t.get_result()) == 20  # 10 batches with 2 jobs
+
+
+def test_multiple_pipelines_for_batch_producer(app):
+    t = GlobalTestData()
+
+    @app.pipeline()
+    def simple_pipeline(pipeline, x):
+        return x.subscribe_func(t.save_multiple_items)
+
+    @app.pipeline()
+    def simple_pipeline2(pipeline, x):
+        return x.subscribe_func(t.save_multiple_items)
+
+    @app.producer(simple_pipeline, simple_pipeline2)
+    def batch_handler(x):
+        yield dict(x=x)
+
+    @app.batch_producer(batch_handler)
+    def worker_producer():
+        for i in range(10):
+            # here we should yield batch of data
+            yield dict(x=1)
+
+    simple_pipeline.compile()
+    simple_pipeline2.compile()
+
+    worker_producer()
+    try:
+        worker_producer()
+        run_jobs_processor(app.project,
+                           [batch_handler],
+                           die_when_empty=True)
+    except SystemExit:
+        pass
+
+    run_pipelines(app)
+
+    assert len(t.get_result()) == 40  # 10 batches with 2 jobs * 2 pipelines
