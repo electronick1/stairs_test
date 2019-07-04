@@ -30,12 +30,12 @@ def rmq_project():
 
 
 def sqs_project():
-    worker_engine = SQSAdapter()
+    worker_engine = SQSAdapter(wait_seconds=5)
     return StairsProject(worker_engine=worker_engine)
 
 
-@pytest.fixture(params=[redis_project],
-                ids=['redis'])
+@pytest.fixture(params=[redis_project, rmq_project, sqs_project],
+                ids=['redis', 'rmq', 'sqs'])
 def app(request):
     project = request.param()
     project.dbs.redis_db.flushall()

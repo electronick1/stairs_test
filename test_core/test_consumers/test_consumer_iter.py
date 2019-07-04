@@ -17,7 +17,7 @@ def test_connected_pipelines(app):
     p_builder.compile()
     p_builder(sentence="Oleg")
     run_pipelines(app)
-    it = save_globaly.iter()
+    it = save_globaly.iter(die_when_empty=True)
     result = next(it)
 
     assert len(result) == 2
